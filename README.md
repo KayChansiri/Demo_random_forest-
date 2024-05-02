@@ -32,10 +32,29 @@ The goal of bagging is to reduce the variance term to make *h*<sub>*d*</sub>(X)(
 
 <img width="231" alt="Screen Shot 2024-05-01 at 8 03 10 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/77885497-5500-4b90-a1d6-8fa2218973e4">
 
+Note that a larger *m* results in a better ensemble and prediction accuracy. However, if *m* is too large, you may eventually end up modeling noise and slowing down the computation.
+
+## Feature Selection
+
+In addition to the bootstrapping process, which involves randomly selecting samples (i.e., rows in the dataset) to reduce variance, Random Forests (RF) also randomly select features at each node of each tree in the forest to further reduce variance without increasing bias. This raises a key question: How many features should be used for each split in an RF?
+
+The number of features to consider at each split in an RF is a tunable parameter known as **`max_features`**. A common rule of thumb is to use the square root of the total number of features for classification tasks, and about one-third of the total features for regression tasks. For example, if your dataset comprises 25 features, you might set approximately 5 features (the square root of 25) for a classification task or about 8 features (one-third of 25) for a regression task. 
+
+During the construction of each tree, at each node, a subset of features is randomly selected based on the `max_features` parameter. The best split on these features is then determined based on how well it can separate the classes in classification or reduce variance in regression. Once a tree begins to form, its structure proceeds to branch out based on the best splits at each node and does not backtrack to alter previous decisions.
+
+Each tree in the forest might end up using different features at its root, contributing to the diversity of the models within the forest. It's important to note that the random selection of features in RF distinguishes it from the approach in a single decision tree, where potentially all features could be used at any node if the tree depth is not limited.
+
+Two major parameters that you can fine-tune in a Random Forest are `max_features` and the number of trees **(`n_estimators`)**. Additionally, modern computational capabilities allow each tree to be built in parallel, which significantly saves on computational time without affecting the statistical performance of the model. This aspect of Random Forests is particularly beneficial for feature selection, as the algorithm can effectively identify which predictors are most impactful by evaluating the reduction of impurities across the forest.
+
+## Out-of-bag error estimation
+
+When building each tree in RF, the algorithm randomly selects a subset of the data (with replacement) for training, which means some data points may be selected multiple times, while others may not be selected at all. The data points not used to train a particular tree are known as the **"out-of-bag"** (OOB) data for that tree. To further explain, with the bootstrapping method, each sub-dataset automatically excludes some data points. For example, from bootstrap 1, the first few data points could be participant IDs 1, 2, 3, and 4, and then for bootstrap 2, it could be IDs 1, 2, 2, and 4, as we sampled with replacement. In this case, participant 3 got automatically excluded from bootstrap 2 while participant ID 2 got selected repeatedly. Approximately, each sub-dataset has 60% overlap of the samples with the original dataset, and the other 40% are repeated cases. 
+
+The main advantage of OOB error estimation is that it provides a way to estimate the model's performance without needing a separate validation or test set. In other words, you may not have to run the cross-validation technique, which could take a lot of time if you have a big forest, to evaluate the model's performance. Refer to my [previous post](( https://kaychansiri.github.io/ClassificationTree/) to learn more about the cross-validation (CV) process. To provide a brief summary, CV is the process that helps evaluate the model's performance, not to reduce variance like the bagging process. As As both OOB error estimation and CV involve categorizing the data pool into subsets, people often get confused between these two methods.
+
+<img width="759" alt="Screen Shot 2024-05-02 at 2 24 56 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/22e97df1-dcbc-42ec-afe2-05958b7123ac">
 
 
-
-
-
-
+The OOB error is very useful as it is automatically available as a by-product of the training process of the random forest, requiring no additional computational cost. This makes the OOB error a convenient and efficient tool for model evaluation and tuning, especially when dealing with large datasets where cross-validation can be computationally expensive. 
+> Note that beyond bagging, other methods such as collecting more data points or applying regularization techniques can help reduce bias as well. Another thing to note is that bagging is not exclusive to random forests; this ensemble technique can be applied to other algorithms as well if your goal is to reduce variance.
 
