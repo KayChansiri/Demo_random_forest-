@@ -58,3 +58,24 @@ The main advantage of OOB error estimation is that it provides a way to estimate
 The OOB error is very useful as it is automatically available as a by-product of the training process of the random forest, requiring no additional computational cost. This makes the OOB error a convenient and efficient tool for model evaluation and tuning, especially when dealing with large datasets where cross-validation can be computationally expensive. 
 > Note that beyond bagging, other methods such as collecting more data points or applying regularization techniques can help reduce bias as well. Another thing to note is that bagging is not exclusive to random forests; this ensemble technique can be applied to other algorithms as well if your goal is to reduce variance.
 
+## Now that you have learned about the basics of RF, let's apply the algorithm to a real-world use case
+In today exmaple, we'll explore how a nationwide satellite service provider uses customer feedback and operational data to enhance customer experience and optimize service delivery. The company, which operates across various counties in California including Los Angeles, San Francisco, and Orange County, seeks to understand the dynamics that influence customer satisfaction and thus improve their services accordingly.
+
+### Dataset Overview
+The dataset consists of responses and operational metrics collected from customers who have interacted with the service provider. Here are some key features of the dataset:
+* customer_id: Unique identifier for each customer.
+* feedback_phase: Indicates the phase of feedback collection (pre- and post- service), aligning with different stages of the customer journey.
+* race_caucasian, race_african_american, race_other, ethnicity_hispanic: Demographic information of the customer to monitor diversity and inclusiveness in service impact.
+* customer_female: Binary indicator of the customer's gender, coding female customers as 1 to ensure gender-specific service considerations.
+* age: Customer's age to tailor services according to different age groups.
+* customer_response, manager_response, representative_response: Feedback scores from the customer, the service manager, and the customer representative, respectively, which reflect different perspectives on the service delivered.
+* CEO_oversee: Indicates whether the service case was directly overseen by the CEO, used as a measure of high-priority service handling.
+* issue_count_during_service: Counts of any issues reported during the service provision, indicating the complexity or challenges faced.
+* years_experience_representative: Experience level of the representative assigned to the customer, hypothesizing that more experienced representatives deliver better service.
+* satisfaction_rating: Overall customer satisfaction rating, serving as the outcome variable for our analysis.
+* county_LA, county_SF, county_OC: Binary indicators representing the location of service.
+* service_location_customer_home, service_location_business_address, service_location_community_spaces, service_location_apartments: Categorial data indicating where the service was provided, which could impact customer satisfaction.
+
+### 
+
+
