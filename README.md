@@ -64,7 +64,7 @@ In today exmaple, we'll explore how a nationwide satellite service provider uses
 ### Dataset Overview
 The dataset consists of responses and operational metrics collected from customers who have interacted with the service provider. Here are some key features of the dataset:
 * customer_id: Unique identifier for each customer.
-* feedback_phase: Indicates the phase of feedback collection (pre- and post- service), aligning with different stages of the customer journey.
+* feedback_phase: Indicates the phase of feedback collection (phase 1 and 2), aligning with different stages of the customer journey.
 * race_caucasian, race_african_american, race_other, ethnicity_hispanic: Demographic information of the customer to monitor diversity and inclusiveness in service impact.
 * customer_female: Binary indicator of the customer's gender, coding female customers as 1 to ensure gender-specific service considerations.
 * age: Customer's age to tailor services according to different age groups.
