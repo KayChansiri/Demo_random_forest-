@@ -58,6 +58,17 @@ The main advantage of OOB error estimation is that it provides a way to estimate
 The OOB error is very useful as it is automatically available as a by-product of the training process of the random forest, requiring no additional computational cost. This makes the OOB error a convenient and efficient tool for model evaluation and tuning, especially when dealing with large datasets where cross-validation can be computationally expensive. 
 > Note that beyond bagging, other methods such as collecting more data points or applying regularization techniques can help reduce bias as well. Another thing to note is that bagging is not exclusive to random forests; this ensemble technique can be applied to other algorithms as well if your goal is to reduce variance.
 
+## Features to be Fine-Tuned
+I previously mentioned the number of trees (`n_estimators`) and the maximum number of features (`max_features`) as parameters that can be fine-tuned. Below is the list of other parameters. For all parameters, the 'GridSearchCV' function, utilizing cross-validation, could help identify the best values along with other factors, such as computational complexity, time, and project objectives. For data with high dimensions, using GridSearch may not be time- and computing-efficient. Other strategies, such as random search or Bayesian optimization, are recommended.
+* **Maximum Depth of Trees (`max_depth`)**: There is no exact rule of thumb regarding how deep a tree should be, although limiting trees to not be too deep helps prevent overfitting. However, setting the parameter too low could lead to underfitting.
+* **Minimum Samples Split (`min_samples_split`)**: Typically, higher values prevent the model from learning overly specific patterns, which can lower the risk of overfitting. However, a value that is too high could lead to underfitting.
+* **Minimum Samples Leaf (`min_samples_leaf`)**: The minimum number of samples required to be at a leaf node. Setting a too low number can lead to overfitting. However, setting the number too high could lead to underfitting. Justifying the right number also depends on your total sample size and whether you have a balanced or imbalanced design, especially for a classification forest. If you have an imbalanced design (i.e., the number of one target class is way higher than the other for a binary classification forest), considering the class with the smaller sample size to decide the minimum sample of the tree could help prevent underfitting issues from the tree not being able to grow due to a smaller sample size of the class compared to the predefined minimum sample split.
+* **Class Weight (`class_weight`)**: Relevant to the point above, setting class weight is useful if you are building a classification forest with imbalanced classes of the target output. The parameter associates classes with weights and prioritizes the minority class during training to compensate for an imbalanced dataset. There are several other methods to deal with the class imbalance issue, which I will discuss more in my upcoming post.
+* **Bootstrap (`bootstrap`)**: By default, RF always utilizes bootstrap. However, if the function is set to be 'false', the whole dataset is used to build each tree. I do not recommend this as bootstrapping can generate heterogeneous samples that still share the same distribution with the original data pool to prevent the issue of overfitting commonly found in decision trees where the whole dataset is used.
+* **Criterion (`criterion`)**: The function to measure the quality of a split. For classification forests, 'Gini' for Gini impurity and 'entropy' for information gain are commonly used. For regression forests, Mean Squared Error ('MSE') or Mean Absolute Error ('MAE') are used to calculate the distance between the actual and predicted values at a node. The split that minimizes this error is chosen.
+* **Max Leaf Nodes (`max_leaf_nodes`)**: The maximum number of leaf nodes a tree can have. Note that if this parameter is defined, the trees might not reach the `max_depth` specified as the algorithm considers growing each tree according to its max_leaf_node first.
+* **Random State (`random_state`)**: Finally, DO NOT forget to set your random state (or set.seed() if you are an R user). This is important for model reproducibility!
+
 ## Now that you have learned about the basics of RF, let's apply the algorithm to a real-world use case
 In today exmaple, we'll explore how a nationwide satellite service provider uses customer feedback and operational data to enhance customer experience and optimize service delivery. The company, which operates across various counties in California including Los Angeles, San Francisco, and Orange County, seeks to understand the dynamics that influence customer satisfaction and thus improve their services accordingly.
 
@@ -78,4 +89,16 @@ The dataset consists of responses and operational metrics collected from custome
 
 ### 
 
+
+
+```ruby
+import math
+# Number of instances
+instances = 100_000
+
+# Calculate approximate depth of a balanced binary tree
+approx_depth = math.log2(instances)
+
+print(approx_depth)
+```
 
