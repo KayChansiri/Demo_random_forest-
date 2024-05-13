@@ -87,18 +87,75 @@ The dataset consists of responses and operational metrics collected from custome
 * county_LA, county_SF, county_OC: Binary indicators representing the location of service.
 * service_location_customer_home, service_location_business_address, service_location_community_spaces, service_location_apartments: Categorial data indicating where the service was provided, which could impact customer satisfaction.
 
-### 
+### Data Preparation
 
-
+The first step is you need to ensure that each feature in the dataset is encoded in the way they are supposed to be (i.e., categorical features are encoded as categorical and continuous are encoded as continuous).
 
 ```ruby
-import math
-# Number of instances
-instances = 100_000
-
-# Calculate approximate depth of a balanced binary tree
-approx_depth = math.log2(instances)
-
-print(approx_depth)
+data.dtypes
 ```
+<img width="409" alt="Screen Shot 2024-05-12 at 7 23 35 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/32272b6e-a7f2-4a7c-8aca-43d7e9357115">
+
+
+You can see that certain categorical variables are are still coded as numeric. Let's convert them: 
+
+```ruby
+#Convert int64 to be categorical 
+# List of categorical variables
+categorical_variables = [
+    'feedback_phase', 'race_caucasian', 'race_african_american', 'race_other',
+    'ethnicity_hispanic', 'customer_female', 'customer_response', 'manager_response',
+    'representative_response', 'CEO_oversee', 'county_LA', 'county_SF', 'county_OC',
+    'service_location_customer_home', 'service_location_business_address',
+    'service_location_community_spaces', 'service_location_apartments'
+]
+
+# Converting columns to 'category' dtype and assigning back to the DataFrame
+data[categorical_variables] = data[categorical_variables].astype('category')
+```
+Check the type of each feature again to ensure the conversion works. 
+
+```ruby
+data.dtypes
+```
+<img width="436" alt="Screen Shot 2024-05-12 at 7 26 54 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/bce74fbc-7bdd-441f-86ca-85cd8eef3131">
+
+The next step is to check missing values. 
+
+```ruby
+# Calculate the percentage of missing values in each column
+missing_percentage = (data.isna().sum() / len(data)) * 100
+
+# Print the percentage of missing values per column
+print(missing_percentage)
+```
+<img width="384" alt="Screen Shot 2024-05-12 at 7 37 16 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/30cd4241-b7fd-417c-81b4-90e18b3dba12">
+
+*****Correct grammar starting from here ***
+The output reflects zero misssing percentages becasue I have dealt with the missingness prior to doing this demo. If you data has missing values and the percentage for each missing column is small (< 2%) you may consider a simple imputation strategy such as mean or mode imputation for continuous and categorical features, respectivelly. If the missingness is large, you have to find out if the missingness is at random (i.e.,not related to other features in the model) or non-random (i.e., significantly related to other features in the model). If it's the latter case, a more complex imputation technique such as multiple imputation, expecatiom maximization, or K-nearest neirghbor could be utilized to ensure that the imputed values do not alter your data pattern. 
+
+Now that we prepared the data, let's split the data into a training and testing set. If you still rememeber from what I described before, the data is longitudial. Thus, we will use the samples from the first wave of customer satifsaction measurement as the training data and use the second wave as the testing data. This method enables us to exmaine whether the model built on a previous time point can be used to predict future data points. Although this method can deal with the temporal nature of the dataset, there are flaws as the method does not account for within-subject effects (i.e., the change of satisfaction score within invividuals over time). The method also considers each observation in the dataset as the unit of analysis, ignoring the analysis at the subject level where time is clustered in. However, for simplicity in doing the demo, I will carry on with trying to deal with the time factor as best as I can by randomly dividing the data into the traning and tetsing set. Then for each ID in the traning set, selecting their rows where 'feedback_phase' == 1 to be used. For the testing set, selecting their rows where 'feedback_phase' == 2 to be used.
+
+```ruby
+#Separate traning and testing data
+from sklearn.model_selection import train_test_split
+
+# Get unique IDs
+unique_ids = data['customer_id'].unique()
+
+# Split IDs into training and testing groups
+train_ids, test_ids = train_test_split(unique_ids, test_size=0.4, random_state=42)
+
+# Select the data for training and testing
+train_data = data[(data['customer_id'].isin(train_ids)) & (data['feedback_phase'] == 1)]
+test_data = data[(data['customer_id'].isin(test_ids)) & (data['feedback_phase'] == 2)]
+```
+
+There are better methods to deal with longitudinal clustered data such as mixed level modeling (referred to (this post I wrote)[https://github.com/KayChansiri/Demo_Longtitudinal-Multilevel-Modeling] or random forest extensions. Hu and Szymczak wrote a very good (article)[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10025446/]. I highly recommend you to read through their article to better understand limitations of and strategies when applying RF with longitudinal data. 
+
+Now back to our  business, after splitting the data into the traning and testing set, let's use gridsearch to find the best values for `max_depth`,`min_samples_split`, `min_samples_leaf`, `criterion`, and `max_leaf_nodes`. Note that some of the parameters I mentioed previously (e.g., `class_weight`) are not fine tuned here as we are working with a regression tree.
+
+
+
+
 
