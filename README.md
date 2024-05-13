@@ -199,11 +199,15 @@ for variable in categorical_variables:
 
 <img width="408" alt="Screen Shot 2024-05-13 at 12 07 55 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/bc567a8e-3df0-497d-9997-5cb93048b3af">
 
+
 <img width="463" alt="Screen Shot 2024-05-13 at 12 08 02 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/8aad852c-7102-4ae3-a3fa-c72900b9d7d7">
+
 
 <img width="520" alt="Screen Shot 2024-05-13 at 12 08 09 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/9fea9e7a-9120-4796-a6ae-faff76d763b4">
 
+
 <img width="454" alt="Screen Shot 2024-05-13 at 12 08 13 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/4b6e9e01-509f-476e-85bb-4388d216de83">
+
 
 Given the counts of each level of the categorical predictors, we have cetrain categories with very uneven distributions, such as `service_location_apartments` or `service_location_community_spaces`. For these features, setting `min_samples_split` too high might prevent each tree from splitting on these features, especially in deeper parts of the tree where the number of samples per node could naturally be lower. Thus, for categories with a smaller number of samples, like `service_location_apartments` (933 for one level), we have to set a smaller `min_samples_split` to allow splits on these less frequent categories. For more balanced categories, such as `race_caucasian` or `customer_female`, we can afford to have a higher `min_samples_split` as splits are less likely to be overly specific and still allow the model to learn significant patterns.
  
@@ -235,12 +239,19 @@ print("Best score (neg MSE):", grid_search.best_score_)
 
 Noe that max_features=0.5 means that at each split, the algorithm randomly selects half of the total features available in the dataset to find the best split (in this case is 10). For max_features=0.3, it means 30% of the total features are used. You will notice if you try running this on your machine that the computational time is quite slow. To speed up the process, you can set n_jobs=-1, which basicually instructing the model to use all available CPU cores.
 
-
 ```ruby
 rf = RandomForestRegressor(n_jobs=-1)
 ```
+Notice that I did not inegrate n_estimator in the GridSearchCV function. This is because setting the number of trees in the forest say, 100, could significantly increase the computational complexity of the search function with marginal benefits. A better and  more computational efficient way is to  manually test several values of n_estimators while keeping other parameters constant to observe how the model performance (e.g., accuracy or mean squared error) changes. We can also request OOB estimation to see better estimate the best number of n_estimator by using the OOB as a validation set before testing the model on the actual testing set. We will also inetegrate the best parameters suggested in the code as well to see if they are actually reduce the errors better:
 
-Request OOB classifiers before evaluating the output on the actual test set. If something wrong in this case, we can adjust
+
+
+```ruby
+Insert the OOB code. 
+```
+
+You decided to not use None for computational efficiency 
+
 
 Note that the final prediction is the average across all trees in teh forest, For classificaiton forest, the final prediction would be the majority voting.
 
