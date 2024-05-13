@@ -48,7 +48,7 @@ Two major parameters that you can fine-tune in a Random Forest are `max_features
 
 ## Out-of-bag error estimation
 
-When building each tree in RF, the algorithm randomly selects a subset of the data (with replacement) for training, which means some data points may be selected multiple times, while others may not be selected at all. The data points not used to train a particular tree are known as the **"out-of-bag"** (OOB) data for that tree. To further explain, with the bootstrapping method, each sub-dataset automatically excludes some data points. For example, from bootstrap 1, the first few data points could be participant IDs 1, 2, 3, and 4, and then for bootstrap 2, it could be IDs 1, 2, 2, and 4, as we sampled with replacement. In this case, participant 3 got automatically excluded from bootstrap 2 while participant ID 2 got selected repeatedly. Approximately, each sub-dataset has 60% overlap of the samples with the original dataset, and the other 40% are repeated cases. 
+When building each tree in RF, the algorithm randomly selects a subset of the data (with replacement) for training, which means some data points may be selected multiple times, while others may not be selected at all. The data points not used to train a particular tree are known as the **"out-of-bag"** (OOB) data for that tree. To further explain, with the bootstrapping method, each sub-dataset automatically excludes some data points. For example, from bootstrap 1, the first few data points could be participant IDs 1, 2, 3, and 4, and then for bootstrap 2, it could be IDs 1, 2, 2, and 4, as we sampled with replacement. In this case, participant 3 got automatically excluded from bootstrap 2 while participant ID 2 got selected repeatedly. Approximately, each sub-dataset has 60% overlap of the samples with the original dataset, and the other 40% are repeated cases. Note that for each predictor (classifier and regressor), the repeated 40% are not the same.
 
 The main advantage of OOB error estimation is that it provides a way to estimate the model's performance without needing a separate validation or test set. In other words, you may not have to run the cross-validation technique, which could take a lot of time if you have a big forest, to evaluate the model's performance. Refer to my [previous post](( https://kaychansiri.github.io/ClassificationTree/) to learn more about the cross-validation (CV) process. To provide a brief summary, CV is the process that helps evaluate the model's performance, not to reduce variance like the bagging process. As As both OOB error estimation and CV involve categorizing the data pool into subsets, people often get confused between these two methods.
 
@@ -134,6 +134,8 @@ print(missing_percentage)
 *****Correct grammar starting from here ***
 The output reflects zero misssing percentages becasue I have dealt with the missingness prior to doing this demo. If you data has missing values and the percentage for each missing column is small (< 2%) you may consider a simple imputation strategy such as mean or mode imputation for continuous and categorical features, respectivelly. If the missingness is large, you have to find out if the missingness is at random (i.e.,not related to other features in the model) or non-random (i.e., significantly related to other features in the model). If it's the latter case, a more complex imputation technique such as multiple imputation, expecatiom maximization, or K-nearest neirghbor could be utilized to ensure that the imputed values do not alter your data pattern. 
 
+### Machine Learning Operation
+
 Now that we prepared the data, let's split the data into a training and testing set. If you still rememeber from what I described before, the data is longitudial. Thus, we will use the samples from the first wave of customer satifsaction measurement as the training data and use the second wave as the testing data. This method enables us to exmaine whether the model built on a previous time point can be used to predict future data points. Although this method can deal with the temporal nature of the dataset, there are flaws as the method does not account for within-subject effects (i.e., the change of satisfaction score within invividuals over time). The method also considers each observation in the dataset as the unit of analysis, ignoring the analysis at the subject level where time is clustered in. However, for simplicity in doing the demo, I will carry on with trying to deal with the time factor as best as I can by randomly dividing the data into the traning and tetsing set. Then for each ID in the traning set, selecting their rows where 'feedback_phase' == 1 to be used. For the testing set, selecting their rows where 'feedback_phase' == 2 to be used.
 
 ```ruby
@@ -153,9 +155,98 @@ test_data = data[(data['customer_id'].isin(test_ids)) & (data['feedback_phase'] 
 
 There are better methods to deal with longitudinal clustered data such as mixed level modeling (referred to (this post I wrote)[https://github.com/KayChansiri/Demo_Longtitudinal-Multilevel-Modeling] or random forest extensions. Hu and Szymczak wrote a very good (article)[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10025446/]. I highly recommend you to read through their article to better understand limitations of and strategies when applying RF with longitudinal data. 
 
-Now back to our  business, after splitting the data into the traning and testing set, let's use gridsearch to find the best values for `max_depth`,`min_samples_split`, `min_samples_leaf`, `criterion`, and `max_leaf_nodes`. Note that some of the parameters I mentioed previously (e.g., `class_weight`) are not fine tuned here as we are working with a regression tree.
+Now back to our  business, after splitting the data into the traning and testing set, let's fit the model use gridsearch to find the best values for `max_depth`,`min_samples_split`, `min_samples_leaf`, `criterion`, and `max_leaf_nodes`. Note that some of the parameters I mentioed previously (e.g., `class_weight`) are not fine tuned here as we are working with a regression tree.
 
 
+```ruby
+import numpy as np
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import mean_squared_error
 
 
+# Separate features and target variable for training data
+X_train = train_data.drop(columns=['satisfaction_rating ', 'customer_id']) #not plan to use ID for the analysis
+y_train = train_data['satisfaction_rating ']
 
+# Separate features and target variable for testing data
+X_test = test_data.drop(columns=['satisfaction_rating', 'customer_id'])
+y_test = test_data['satisfaction_rating']
+
+# Define the model
+rf = RandomForestRegressor()
+```
+
+Before we move forward with fine-tunin the parameters, let's examine the number of sample size in each category of our categorica predictors. This is helpful in identifying certain paramters such as `min_samples_split'.
+
+
+```ruby
+# List of categorical variables
+categorical_variables = [
+    'feedback_phase', 'race_caucasian', 'race_african_american', 'race_other',
+    'ethnicity_hispanic', 'customer_female', 'customer_response', 'manager_response',
+    'representative_response', 'CEO_oversee', 'county_LA', 'county_SF', 'county_OC',
+    'service_location_customer_home', 'service_location_business_address',
+    'service_location_community_spaces', 'service_location_apartments'
+]
+
+# Loop through each categorical variable and print the value counts
+for variable in categorical_variables:
+    print(f"Counts for {variable}:")
+    print(data[variable].value_counts())
+    print("\n")  # Adds a newline for better readability between outputs
+```
+
+<img width="408" alt="Screen Shot 2024-05-13 at 12 07 55 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/bc567a8e-3df0-497d-9997-5cb93048b3af">
+
+<img width="463" alt="Screen Shot 2024-05-13 at 12 08 02 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/8aad852c-7102-4ae3-a3fa-c72900b9d7d7">
+
+<img width="520" alt="Screen Shot 2024-05-13 at 12 08 09 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/9fea9e7a-9120-4796-a6ae-faff76d763b4">
+
+<img width="454" alt="Screen Shot 2024-05-13 at 12 08 13 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/4b6e9e01-509f-476e-85bb-4388d216de83">
+
+Given the counts of each level of the categorical predictors, we have cetrain categories with very uneven distributions, such as `service_location_apartments` or `service_location_community_spaces`. For these features, setting `min_samples_split` too high might prevent each tree from splitting on these features, especially in deeper parts of the tree where the number of samples per node could naturally be lower. Thus, for categories with a smaller number of samples, like `service_location_apartments` (933 for one level), we have to set a smaller `min_samples_split` to allow splits on these less frequent categories. For more balanced categories, such as `race_caucasian` or `customer_female`, we can afford to have a higher `min_samples_split` as splits are less likely to be overly specific and still allow the model to learn significant patterns.
+ 
+A conservative starting point for `min_samples_split` could be around 5% to 10% of the smallest category size in the dataset. In this case, it is 933 from service_location_apartments x 0.05  = 46. This would be a conservative start, ensuring that the model can still split on the smallest category.
+For max_depth, we will set the lowest number as the sqaure root of the total number of features (n = 20), which is approxinatelt 4.5. We will begin with 5 here. For 'min_samples_leaf', we will yse rhe same rule of thumb with  `min_samples_split` (~46).Since we have fewer features  in the dataset, we may not have to be worried about max_leaf_nodes and max_depth as it's unlikely that the model would be overfitting. Thus, we will include 'None' to not restructive those parameters along with other numbers Below, we will test around different thresholds, observing model performance through cross-validation to see if increasing or decreasing the parrameters improves performance.
+
+```ruby
+# Create the parameter grid
+param_grid = {
+    'max_depth': [None, 5, 10, 15], 
+    'min_samples_split': [45, 100, 150],
+    'min_samples_leaf': [45, 50, 100],
+    'criterion': ['squared_error', 'absolute_error'],  # 'mse' and 'mae' are deprecated in favor of these in newer versions
+    'max_leaf_nodes': [None, 10, 20, 30], # None means unlimited
+    'max_features': ['auto', 'sqrt', 'log2', 0.5, 0.3, 10] 
+}
+
+# Setup the grid search
+grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=5, scoring='neg_mean_squared_error', verbose=1, n_jobs=-1)
+
+# Fit the grid search to the data
+grid_search.fit(X_train, y_train)
+
+# Print the best parameters and best score
+print("Best parameters:", grid_search.best_params_)
+print("Best score (neg MSE):", grid_search.best_score_)
+
+```
+
+Noe that max_features=0.5 means that at each split, the algorithm randomly selects half of the total features available in the dataset to find the best split (in this case is 10). For max_features=0.3, it means 30% of the total features are used. You will notice if you try running this on your machine that the computational time is quite slow. To speed up the process, you can set n_jobs=-1, which basicually instructing the model to use all available CPU cores.
+
+
+```ruby
+rf = RandomForestRegressor(n_jobs=-1)
+```
+
+Request OOB classifiers before evaluating the output on the actual test set. If something wrong in this case, we can adjust
+
+Note that the final prediction is the average across all trees in teh forest, For classificaiton forest, the final prediction would be the majority voting.
+
+
+## Whatelse about Ensemble techniques
+
+Rrandom forest is not the only emsemble technoque that you can use. You cam even get the best prediction by emsembling different algorithms such as random forest, KNN, logistic regression, etc. all together using VotingClassifier  This is a way to get a diverse set of classifiers by using different training algorithms. The method is different from bagging of random forest, which is to use the same training algorithm but train them on different random subsets of the same training set. In additon to the  bagging that I explained previously, there are also sampling tehcniques without replacement, which is called pasting. However, I will not cover the topic for this demo. You can try pasting by setting boostrap = False to see which emsemble method performs better.
+
+You can also perform bagging without ramdonoy selecting features. To do so, you will use the BaggingClassifier   or BaggingRegressor.  BaggingClassifier by default returns the predicted values as the probability of belonging to a target class across the trees, which is called 'soft voting'. We can also get 'hard voting', which is to count the majority votes of the class output instead of the majority vot eof the probabuliy of the class output by turnung off the default mode. However, I would recommend the soft voting as it better reduces biases. For both  BaggingClassifier  and BaggingRegressor, you can also sample features as well. Those are controlled by two parameters: max_features  and bootstrap_features. However, to get things done at one step, I would recommend using RandomForestRegressor and RandomForestClassifier instead.
