@@ -131,12 +131,12 @@ print(missing_percentage)
 ```
 <img width="384" alt="Screen Shot 2024-05-12 at 7 37 16 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/30cd4241-b7fd-417c-81b4-90e18b3dba12">
 
-*****Correct grammar starting from here ***
-The output reflects zero misssing percentages becasue I have dealt with the missingness prior to doing this demo. If you data has missing values and the percentage for each missing column is small (< 2%) you may consider a simple imputation strategy such as mean or mode imputation for continuous and categorical features, respectivelly. If the missingness is large, you have to find out if the missingness is at random (i.e.,not related to other features in the model) or non-random (i.e., significantly related to other features in the model). If it's the latter case, a more complex imputation technique such as multiple imputation, expecatiom maximization, or K-nearest neirghbor could be utilized to ensure that the imputed values do not alter your data pattern. 
+The output reflects zero missing percentages because I addressed the missingness prior to this demonstration. If your data has missing values and the percentage for each missing column is small (<2%), you may consider a simple imputation strategy such as mean or mode imputation for continuous and categorical features, respectively. If the missingness is large, you need to determine whether the missingness is at random (i.e., not related to other features in the model) or non-random (i.e., significantly related to other features in the model). If it is the latter case, a more complex imputation technique such as multiple imputation, expectation maximization, or K-nearest neighbor could be utilized to ensure that the imputed values do not alter your data patterns.
+
 
 ### Machine Learning Operation
 
-Now that we prepared the data, let's split the data into a training and testing set. If you still rememeber from what I described before, the data is longitudial. Thus, we will use the samples from the first wave of customer satifsaction measurement as the training data and use the second wave as the testing data. This method enables us to exmaine whether the model built on a previous time point can be used to predict future data points. Although this method can deal with the temporal nature of the dataset, there are flaws as the method does not account for within-subject effects (i.e., the change of satisfaction score within invividuals over time). The method also considers each observation in the dataset as the unit of analysis, ignoring the analysis at the subject level where time is clustered in. However, for simplicity in doing the demo, I will carry on with trying to deal with the time factor as best as I can by randomly dividing the data into the traning and tetsing set. Then for each ID in the traning set, selecting their rows where 'feedback_phase' == 1 to be used. For the testing set, selecting their rows where 'feedback_phase' == 2 to be used.
+Now that we have prepared the data, let's split it into a training and testing set. As you may remember from my previous description, the data is longitudinal. Therefore, we will use the samples from the first wave of customer satisfaction measurement as the training data and the second wave as the testing data. This method allows us to examine whether the model built on a previous time point can predict future data points. Although this method can address the temporal nature of the dataset, it has flaws as it does not account for within-subject effects (i.e., the change in satisfaction scores within individuals over time). Additionally, this method treats each observation in the dataset as the unit of analysis, ignoring the analysis at the subject level where time is clustered. However, for simplicity in this demonstration, I will attempt to address the time factor as best as I can by randomly dividing the data into training and testing sets. For each ID in the training set, I will select their rows where 'feedback_phase' == 1 to be used, and for the testing set, I will select their rows where 'feedback_phase' == 2 to be used.
 
 ```ruby
 #Separate traning and testing data
@@ -153,10 +153,10 @@ train_data = data[(data['customer_id'].isin(train_ids)) & (data['feedback_phase'
 test_data = data[(data['customer_id'].isin(test_ids)) & (data['feedback_phase'] == 2)]
 ```
 
-There are better methods to deal with longitudinal clustered data such as mixed level modeling (referred to (this post I wrote)[https://github.com/KayChansiri/Demo_Longtitudinal-Multilevel-Modeling] or random forest extensions. Hu and Szymczak wrote a very good (article)[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10025446/]. I highly recommend you to read through their article to better understand limitations of and strategies when applying RF with longitudinal data. 
 
-Now back to our  business, after splitting the data into the traning and testing set, let's fit the model use gridsearch to find the best values for `max_depth`,`min_samples_split`, `min_samples_leaf`, `criterion`, and `max_leaf_nodes`. Note that some of the parameters I mentioed previously (e.g., `class_weight`) are not fine tuned here as we are working with a regression tree.
+There are better methods to deal with longitudinal clustered data, such as mixed-level modeling (referred to in [this post](https://github.com/KayChansiri/Demo_Longtitudinal-Multilevel-Modeling) I wrote for random forest extensions. Hu and Szymczak wrote a very good [article](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10025446/]). I highly recommend reading their article to better understand the limitations of and strategies for applying random forests to longitudinal data.
 
+Now back to our business, after splitting the data into the training and testing sets, let's fit the model using GridSearchCV to find the best values for max_depth, min_samples_split, min_samples_leaf, criterion, and max_leaf_nodes. Note that some of the parameters I mentioned previously (e.g., class_weight) are not fine-tuned here as we are working with a regression forest.
 
 ```ruby
 import numpy as np
@@ -177,7 +177,7 @@ y_test = test_data['satisfaction_rating']
 rf = RandomForestRegressor()
 ```
 
-Before we move forward with fine-tunin the parameters, let's examine the number of sample size in each category of our categorica predictors. This is helpful in identifying certain paramters such as `min_samples_split'.
+Before we move forward with fine-tuning the parameters, let's examine the sample size in each category of our categorical predictors. This is helpful in identifying certain parameters such as min_samples_split.
 
 
 ```ruby
@@ -209,10 +209,9 @@ for variable in categorical_variables:
 <img width="454" alt="Screen Shot 2024-05-13 at 12 08 13 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/4b6e9e01-509f-476e-85bb-4388d216de83">
 
 
-Given the counts of each level of the categorical predictors, we have cetrain categories with very uneven distributions, such as `service_location_apartments` or `service_location_community_spaces`. For these features, setting `min_samples_split` too high might prevent each tree from splitting on these features, especially in deeper parts of the tree where the number of samples per node could naturally be lower. Thus, for categories with a smaller number of samples, like `service_location_apartments` (933 for one level), we have to set a smaller `min_samples_split` to allow splits on these less frequent categories. For more balanced categories, such as `race_caucasian` or `customer_female`, we can afford to have a higher `min_samples_split` as splits are less likely to be overly specific and still allow the model to learn significant patterns.
- 
-A conservative starting point for `min_samples_split` could be around 5% to 10% of the smallest category size in the dataset. In this case, it is 933 from service_location_apartments x 0.05  = 46. This would be a conservative start, ensuring that the model can still split on the smallest category.
-For max_depth, we will set the lowest number as the sqaure root of the total number of features (n = 20), which is approxinatelt 4.5. We will begin with 5 here. For 'min_samples_leaf', we will yse rhe same rule of thumb with  `min_samples_split` (~46).Since we have fewer features  in the dataset, we may not have to be worried about max_leaf_nodes and max_depth as it's unlikely that the model would be overfitting. Thus, we will include 'None' to not restructive those parameters along with other numbers Below, we will test around different thresholds, observing model performance through cross-validation to see if increasing or decreasing the parrameters improves performance.
+Given the counts of each level of the categorical predictors, we have certain categories with very uneven distributions, such as service_location_apartments or service_location_community_spaces. For these features, setting min_samples_split too high might prevent each tree from splitting on these features, especially in deeper parts of the tree where the number of samples per node could naturally be lower. Thus, for categories with a smaller number of samples, like service_location_apartments (933 for one level), we have to set a smaller min_samples_split to allow splits on these less frequent categories. For more balanced categories, such as race_caucasian or customer_female, we can afford to have a higher min_samples_split as splits are less likely to be overly specific and still allow the model to learn significant patterns.
+
+A conservative starting point for min_samples_split could be around 5% to 10% of the smallest category size in the dataset. In this case, it is 933 from service_location_apartments × 0.05 = 46. This would be a conservative start, ensuring that the model can still split on the smallest category. For max_depth, we will set the lowest number as the square root of the total number of features (n = 20), which is approximately 4.5. We will begin with 5 here. For min_samples_leaf, we will use the same rule of thumb as with min_samples_split (~46). Since we have fewer features in the dataset, we may not have to worry about max_leaf_nodes and max_depth as it is unlikely that the model would overfit. Thus, we will include 'None' to not restrict those parameters along with other numbers. Below, we will test different thresholds, observing model performance through cross-validation to see if increasing or decreasing the parameters improves performance.
 
 ```ruby
 # Create the parameter grid
@@ -237,6 +236,7 @@ print("Best score (neg MSE):", grid_search.best_score_)
 
 ```
 
+***correct grannar**
 Noe that max_features=0.5 means that at each split, the algorithm randomly selects half of the total features available in the dataset to find the best split (in this case is 10). For max_features=0.3, it means 30% of the total features are used. You will notice if you try running this on your machine that the computational time is quite slow. To speed up the process, you can set n_jobs=-1, which basicually instructing the model to use all available CPU cores.
 
 ```ruby
