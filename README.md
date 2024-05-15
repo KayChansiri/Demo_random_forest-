@@ -339,18 +339,82 @@ print("Best score (neg MSE):", grid_search.best_score_)
 
 <img width="983" alt="Screen Shot 2024-05-14 at 4 57 32 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/b3c50987-3e38-45d6-9b26-4cc6ad369678">
 
-The results suggested  Best score (neg MSE) = -0.8845791452984593. The negative MSE indicates the mean squared error of the model, with a lower value representing better performance. Most machine learning libraries, including scikit-learn, have scoring functions designed to maximize a score. For many evaluation metrics, such as accuracy and precision, higher values are better . However, for metrics where lower values are better like mean squared error, the natural formulation conflicts with the maximization objective. Thus, Scikit-learn handles this by negating the scores of metrics where lower values are better. This way, the library can use the same optimization routines to maximize the (negative) score. The negative values are used during the optimization process, but when interpreting the results, we convert them back to positive values to understand the actual MSE. In other words, you can interpret negative MSE as a normal way to interpret a positive MSE. Thus, in this case, we have MSE = 0.88
+The results suggested  Best score (neg MSE) = -0.8845791452984593. The negative MSE indicates the mean squared error of the model, with a lower value representing better performance. Most machine learning libraries, including scikit-learn, have scoring functions designed to maximize a score. For many evaluation metrics, such as accuracy and precision, higher values are better . However, for metrics where lower values are better like mean squared error, the natural formulation conflicts with the maximization objective. Thus, Scikit-learn handles this by negating the scores of metrics where lower values are better. This way, the library can use the same optimization routines to maximize the (negative) score. The negative values are used during the optimization process, but when interpreting the results, we convert them back to positive values to understand the actual MSE. In other words, you can interpret negative MSE as a normal way to interpret a positive MSE. Thus, in this case, we have MSE = 0.88.
 
-Notice that I did not inegrate n_estimator in the GridSearchCV function. This is because setting the number of trees in the forest say, 100, could significantly increase the computational complexity of the search function with marginal benefits. A better and  more computational efficient way is to  manually test several values of n_estimators while keeping other parameters constant to observe how the model performance (e.g., accuracy or mean squared error) changes. We can also request OOB estimation to see better estimate the best number of n_estimator by using the OOB as a validation set before testing the model on the actual testing set. We will also inetegrate the best parameters suggested in the code as well to see if they are actually reduce the errors better:
-
+Notice that I did not integrate n_estimators in the GridSearchCV function. This is because setting the number of trees in the forest, say 100, could significantly increase the computational complexity of the search function with marginal benefits. A better and more computationally efficient way is to manually test several values of n_estimators while keeping other parameters constant, according to the grid search suggestion, and observe how the model performance (e.g., accuracy or mean squared error) changes. We can also request out-of-bag (OOB) estimation to better estimate the optimal number of n_estimators by using the OOB as a validation set before testing the model on the actual test set.
 
 
 ```ruby
-Insert the OOB code. 
+import matplotlib.pyplot as plt
+
+# Possible values of n_estimators
+n_estimators_values = [50, 100, 200, 300, 400, 500, 1000, 5000]
+oob_errors = []
+
+# Iterate over values of n_estimators
+for n in n_estimators_values:
+    model = RandomForestRegressor(n_estimators=n,
+                                  max_depth= 20, max_features = 1.0, max_leaf_nodes = 50, min_samples_leaf= 15, 
+                                  min_samples_split= 15,
+                                  oob_score=True, n_jobs=-1, random_state=42, bootstrap=True)
+    model.fit(X_train, y_train)
+    # Record the OOB error
+    oob_error = 1 - model.oob_score_  # oob_score_ gives the R^2 value, converting it to error
+    oob_errors.append(oob_error)
+
+# Plotting the OOB errors
+plt.figure(figsize=(10, 5))
+plt.plot(n_estimators_values, oob_errors, label='OOB Error')
+plt.xlabel('Number of Trees (n_estimators)')
+plt.ylabel('OOB Error')
+plt.title('Effect of n_estimators on OOB Error')
+plt.legend()
+plt.show()
 ```
 
-You decided to not use None for computational efficiency 
+<img width="915" alt="Screen Shot 2024-05-14 at 8 33 44 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/e2b59e18-dc8c-4bd8-b1f4-14903e34533a">
 
+The output shows that at n_estimators around 1000, the OOB error starts to stabilize and does not significantly decrease. Thus, we will use this number as utilizing a larger number could increase computational complexity without improving model performance. The OOB error is estimated by 1 - R squared, or the variance in the target variable explained by the model. According to the output, the OOB error is quite high (~0.9005), indicating that our model does not fit the data well. The model performance could be worse when we use the model to predict the outcome of the test set. This could happen because Random Forest might not be the best algorithm to describe the current data pattern. Let's fit the final model using this value of n_estimators along with fine-tuning other parameters based on the values that we obtained earlier to see my hypothesis is true.
+
+```ruby
+# Final model configuration 
+final_model = RandomForestRegressor(n_estimators=1000,
+                                    max_depth=10, max_features=1.0, max_leaf_nodes=50, min_samples_leaf=15, 
+                                    min_samples_split=15,
+                                    oob_score=True, n_jobs=-1, random_state=42, bootstrap=True)
+final_model.fit(X_train, y_train)
+```
+
+```ruby
+from sklearn.model_selection import cross_val_score
+
+scores = cross_val_score(final_model, X_train, y_train, cv=5, scoring='r2')
+print(f'Cross-validated R^2 scores: {scores}')
+print(f'Mean cross-validated R^2 score: {scores.mean()}')
+
+```
+
+Here is the output: 
+<img width="754" alt="Screen Shot 2024-05-14 at 8 43 31 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/98e3babd-b36e-429d-b331-a334d2075c05">
+
+The average R sqaured scores across five cross-validation folds are 0.096, suggesting that, on average, the model explains about 9.61% of the variance in the target variable. Now let's apply the model to the testing set to see its performance: 
+
+
+```ruby
+#test the model with the testing set 
+
+from sklearn.metrics import r2_score
+
+# Make predictions on the testing set
+y_pred = final_model.predict(X_test)
+
+# Calculate the R² score on the testing set
+test_r2_score = r2_score(y_test, y_pred)
+
+print(f'Test R² score: {test_r2_score}')
+
+```
+The Test R² score is 0.10308160635013575, which slightly improved from the traning set. STOP HERE. NOW I adjusted the model and its better 
 
 Note that the final prediction is the average across all trees in teh forest, For classificaiton forest, the final prediction would be the majority voting.
 
