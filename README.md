@@ -169,7 +169,7 @@ print("Test data shape:", test_data.shape)
 <img width="270" alt="Screen Shot 2024-05-14 at 4 42 24 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/d76ab319-ad3e-4abc-8bdc-6392aa189718">
 
 
-Note that the current dataset is cross-sectional, where each sample is measured their features and outcomes for only time. This might not be the case for a real-world dataset. If you have longitudinal data, there are better methods than RF, such as mixed-level modeling (referred to in [this post](https://github.com/KayChansiri/Demo_Longtitudinal-Multilevel-Modeling) I wrote for random forest extensions. Hu and Szymczak wrote a very good [article](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10025446/]) regarding how to use random forest extensions to deal with longtudinal, clustered data. I highly recommend reading their article to better understand the limitations of and strategies for applying random forests to longitudinal data.
+Note that the current dataset is cross-sectional, where each sample is measured their features and outcomes for only time. This might not be the case for a real-world dataset. If you have longitudinal data, there are better methods than RF, such as mixed-level modeling (referred to in [this post](https://github.com/KayChansiri/Demo_Longtitudinal-Multilevel-Modeling) I wrote.  For random forest extensions, Hu and Szymczak wrote a very good [article](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10025446/]) regarding how to use the methods to deal with longtudinal, clustered data. I highly recommend reading their article to better understand the limitations of and strategies for applying random forests to longitudinal data.
 
 Now back to our business, after splitting the data into the training and testing sets, let's fit the model using GridSearchCV to find the best values for max_depth, min_samples_split, min_samples_leaf, criterion, and max_leaf_nodes. Note that some of the parameters I mentioned previously (e.g., class_weight) are not fine-tuned here as we are working with a regression forest.
 
@@ -181,7 +181,7 @@ from sklearn.metrics import mean_squared_error
 
 
 # Separate features and target variable for training data
-X_train = train_data.drop(columns=['satisfaction_rating', 'customer_id', 'feedback_phase']) #not plan to use ID for the analysis
+X_train = train_data.drop(columns=['satisfaction_rating', 'customer_id', 'feedback_phase']) #not plan to use for the analysis
 y_train = train_data['satisfaction_rating']
 
 # Separate features and target variable for testing data
@@ -312,12 +312,12 @@ Name: service_location_apartments, dtype: int64
 
 Given the counts of each level of the categorical predictors, we have certain categories with very uneven distributions, such as service_location_apartments or race_other. For these features, setting min_samples_split too high might prevent each tree from splitting on these features, especially in deeper parts of the tree where the number of samples per node could naturally be lower. Thus, for categories with a smaller number of samples, we have to set a smaller min_samples_split to allow splits on these less frequent categories. 
 
-A conservative starting point for min_samples_split could be around 5% to 10% of the smallest category size in the dataset. In this case, it is 329 from service_location_apartments. Multiplying this number with 0.05 results in ~16. We will use 15. This number would be a conservative start, ensuring that the model can still split on the smallest category. For max_depth, we will set the lowest number as the square root of the total number of features (n = 20) and will also use 1.0, which indicates 100% of the total features are used. We will begin with 5 here. For min_samples_leaf, we will use the same rule of thumb as with min_samples_split (~15). Since we have fewer features in the dataset, we may not have to worry about max_leaf_nodes and max_depth as it is unlikely that the model would overfit. Thus, we will include 'None' to not restrict those parameters along with other numbers. Below, we will test different thresholds, observing model performance through cross-validation to see if increasing or decreasing the parameters improves performance.
+A conservative starting point for min_samples_split could be around 5% to 10% of the smallest category size in the dataset. In this case, it is 329 from service_location_apartments. Multiplying this number with 0.05 results in ~16. We will use 15. This number would be a conservative start, ensuring that the model can still split on the smallest category. For max_depth, we will set the lowest number as the square root of the total number of features (n = 20) and will also use 1.0, which indicates 100% of the total features are used. For min_samples_leaf, we will use the same rule of thumb as with min_samples_split (~15). Since we have fewer features in the dataset, we may not have to worry about max_leaf_nodes and max_depth as it is unlikely that the model would overfit. Thus, we will include 'None' to not restrict those parameters along with other numbers. Below, we will test different thresholds, observing model performance through cross-validation to see if increasing or decreasing the parameters improves performance.
 
 ```ruby
 # Create the parameter grid
 param_grid = {
-    'max_depth': [None, 10, 20], 
+    'max_depth': [None, 5, 10], 
     'min_samples_split': [15, 50],
     'min_samples_leaf': [15, 50],
     'criterion': ['squared_error', 'absolute_error'], 
@@ -374,11 +374,11 @@ plt.show()
 
 <img width="915" alt="Screen Shot 2024-05-14 at 8 33 44 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/e2b59e18-dc8c-4bd8-b1f4-14903e34533a">
 
-The output shows that at n_estimators around 1000, the OOB error starts to stabilize and does not significantly decrease. Thus, we will use this number as utilizing a larger number could increase computational complexity without improving model performance. The OOB error is estimated by 1 - R squared, or the variance in the target variable explained by the model. According to the output, the OOB error is quite high (~0.9005), indicating that our model does not fit the data well. The model performance could be worse when we use the model to predict the outcome of the test set. This could happen because Random Forest might not be the best algorithm to describe the current data pattern. Let's fit the final model using this value of n_estimators along with fine-tuning other parameters based on the values that we obtained earlier to see my hypothesis is true.
+The output shows that at n_estimators around 5000, the OOB error starts to stabilize and does not significantly decrease. Thus, we will use this number as utilizing a larger number could increase computational complexity without improving model performance. The OOB error is estimated by 1 - R squared, or the variance in the target variable explained by the model. According to the output, the OOB error is quite high (~0.81), indicating that our model does not fit the data well. The model performance could be worse when we use the model to predict the outcome of the test set. This could happen because Random Forest might not be the best algorithm to describe the current data pattern. Let's fit the final model using this value of n_estimators along with fine-tuning other parameters based on the values that we obtained earlier to see my hypothesis is true.
 
 ```ruby
 # Final model configuration 
-final_model = RandomForestRegressor(n_estimators=1000,
+final_model = RandomForestRegressor(n_estimators=5000,
                                     max_depth=10, max_features=1.0, max_leaf_nodes=50, min_samples_leaf=15, 
                                     min_samples_split=15,
                                     oob_score=True, n_jobs=-1, random_state=42, bootstrap=True)
@@ -395,7 +395,10 @@ print(f'Mean cross-validated R^2 score: {scores.mean()}')
 ```
 
 Here is the output: 
-<img width="754" alt="Screen Shot 2024-05-14 at 8 43 31 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/98e3babd-b36e-429d-b331-a334d2075c05">
+
+
+<img width="746" alt="Screen Shot 2024-05-19 at 4 13 02 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/2f8ab264-89c6-499b-befa-a795f19bedd1">
+
 
 The average R sqaured scores across five cross-validation folds are 0.096, suggesting that, on average, the model explains about 9.61% of the variance in the target variable. Now let's apply the model to the testing set to see its performance: 
 
@@ -414,9 +417,35 @@ test_r2_score = r2_score(y_test, y_pred)
 print(f'Test R² score: {test_r2_score}')
 
 ```
-The Test R² score is 0.10308160635013575, which slightly improved from the traning set. STOP HERE. NOW I adjusted the model and its better 
+grammar here 
+The Test R² score is 0.10267677698649125. The number is low and consistent with the traning data performance, indicating that there might be a better algorithm to fit the data. Also note that the  model performance of the testing set is slightly higher than the traning set. This is not usual and can occur due to several reasons. The first potential reason is model variance. In this case, I use 80% of the original data as the training set and 20% as the tetsing set. As the testing set is smaller,  the R² score might be less stable and more susceptible to fluctuations due to the particular characteristics of the data. Samples in the tetsing set might be easier to predict or might be less diverse than the training data. A second reason could be the model is underfitting  or just poor fitting. When it is applied to a new data set (testing set), the model fits better. However, note that despite the differences in the performance between traniing and testing set, the difference is very small. The results across the validation folds of the traning set also reflect that some folds' performance are quite closed to the performance of the testing set. This indicated that the model is not likely underfitting or overfitting, and teh discrepancy is likely becasue RF is not the right algprithm to explain the current dataset. 
 
-Note that the final prediction is the average across all trees in teh forest, For classificaiton forest, the final prediction would be the majority voting.
+To confirm the hypothesis, I performed the following steps:
+
+1) Resplit the traning and testing set to be the ration 60:40 instead of 80:20 and repeat the same model building and evaluation stage that I described earlie. With this new ration, the traning data perforamnce across the 5 validation folds is 0.091 with some folds' performance as closed as the testing performance, which is 0.097. The findings indicating that the model is likely poor fitting rather than the issue about the differnce sin dustribution in traning dand testing dataset.
+
+2) As poor could be a potnetial reason, I fine-tuned hyperparameters again. This time, I do not limit the max_leaf_nodes and set a  min_samples_split and  min_samples_leaf as low as 2, which is the deafult setting:
+ 
+
+
+<img width="999" alt="Screen Shot 2024-05-19 at 4 58 25 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/da081e55-d157-4a6c-9c57-1d0e3338c616">
+
+
+According to the output, you can see that the model performance both with the testing and traning set improved overall from the previous parameter setting. However, the model performance is stil quite low (~15%). When you run into this type of issue like this, other algorithms hsoukd be tested. However, for the purpose of the current demo, I will continue with RF. The next task to do in better understand the dataset is to test feature importance,  which helps to identify which features contribute the most to the prediction
+
+
+```ruby
+importances = final_model.feature_importances_
+feature_names = X_train.columns
+sorted_indices = np.argsort(importances)[::-1]
+
+plt.figure(figsize=(10, 5))
+plt.title('Feature Importances')
+plt.bar(range(X_train.shape[1]), importances[sorted_indices], align='center')
+plt.xticks(range(X_train.shape[1]), feature_names[sorted_indices], rotation=90)
+plt.tight_layout()
+plt.show()
+```
 
 
 ## Whatelse about Ensemble techniques
