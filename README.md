@@ -447,9 +447,35 @@ plt.tight_layout()
 plt.show()
 ```
 
+Here is the output: 
+
+<img width="987" alt="Screen Shot 2024-05-20 at 9 49 10 AM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/8dff1582-6f56-4623-ace2-8958cf2dfdbb">
+
+
+The y-axis represents the importance scores of the features, which is calculated based on how effectively each feature is used to split the data and reduce the model's error. Higher values indicate a specific feature leads to larger gains in purity of the nodes in the tree and a greater reduction in model error when that feature is used in a split. IN this specific output, you will see that representatives' years of experience has the highest importance score (~0.5), indicating that this feature accounts for approximately 50% of the predictive power of the model. Note that the importance scores are typically normalized so that the sum of all feature importances equals 1. Each score can be interpreted as the proportion of the model's predictive power attributable to each feature.
+
+
+You will also notice a significant drop in the feature importance from representatives' years of experiences to customers' age, which explains about 10% of the predictive power in the model. The next features in the output indicates less and less importance as features. Overall the findings suggested that the majority of the model's predictive capability is concentrated in a few features. The least five importance features, including  'service_location_apartments', 'race_other', 'service_location_community_spaces', 'county_SF' and 'ethnicity_hispanic', each explains less than 0.05% of the predictive power. I will re-run the model and fine-tune hyperparameters based on teh new data exlcuding those features to see if the model performance improves. 
+
+
+```ruby
+# Separate features and target variable for training data
+X_train = train_data.drop(columns=['satisfaction_rating', 'customer_id', 'feedback_phase', 'service_location_apartments', 'race_other', 'service_location_community_spaces', 'county_SF', 'ethnicity_hispanic']) #not plan to use ID for the analysis
+y_train = train_data['satisfaction_rating']
+
+# Separate features and target variable for testing data
+X_test = test_data.drop(columns=['satisfaction_rating', 'customer_id', 'feedback_phase', 'service_location_apartments', 'race_other', 'service_location_community_spaces', 'county_SF', 'ethnicity_hispanic'])
+y_test = test_data['satisfaction_rating']
+
+# Define the model
+rf = RandomForestRegressor(n_jobs=-1)
+
+```
+
+Performing the step of hyper parameter finetuning above, the final  R² score for the testing set is 0.1697135584517251, which is approximately 2% improved from the model when the least five important features were included.
 
 ## Whatelse about Ensemble techniques
 
-Rrandom forest is not the only emsemble technoque that you can use. You cam even get the best prediction by emsembling different algorithms such as random forest, KNN, logistic regression, etc. all together using VotingClassifier  This is a way to get a diverse set of classifiers by using different training algorithms. The method is different from bagging of random forest, which is to use the same training algorithm but train them on different random subsets of the same training set. In additon to the  bagging that I explained previously, there are also sampling tehcniques without replacement, which is called pasting. However, I will not cover the topic for this demo. You can try pasting by setting boostrap = False to see which emsemble method performs better.
+Rrandom forest is not the only emsemble technoque that you can use. You can even get the best prediction by emsembling different algorithms such as random forest, KNN, logistic regression, etc. all together.  This is a way to get a diverse set of classifiers by using different training algorithms. The method is different from bagging of random forest, which is to use the same training algorithm but train them on different random subsets of the same training set. In additon to the  bagging that I explained previously, there are also sampling tehcniques without replacement, which is called pasting. However, I will not cover the topic for this demo. You can try pasting by setting boostrap = False to see which emsemble method performs better.
 
-You can also perform bagging without ramdonoy selecting features. To do so, you will use the BaggingClassifier   or BaggingRegressor.  BaggingClassifier by default returns the predicted values as the probability of belonging to a target class across the trees, which is called 'soft voting'. We can also get 'hard voting', which is to count the majority votes of the class output instead of the majority vot eof the probabuliy of the class output by turnung off the default mode. However, I would recommend the soft voting as it better reduces biases. For both  BaggingClassifier  and BaggingRegressor, you can also sample features as well. Those are controlled by two parameters: max_features  and bootstrap_features. However, to get things done at one step, I would recommend using RandomForestRegressor and RandomForestClassifier instead.
+Note that athough emesembale tecniques are used to ensure a good model performance, the method is less ued in production becasue of the challnahe in deployment and maintainence.  However, for certain scenarios such as using the RF to predict deposit subsciption at a bank, the method is still popular in preoduction as a small performance boost can lead to a significant financial gain.
