@@ -14,9 +14,9 @@ In classification tasks, each decision tree aims to classify samples into catego
 In regression tasks, the objective is to predict a continuous value and minimize the variance within each node after the split. Here, impurity is represented by the variance in the node's values. A preferred split is one that results in child nodes with lower variance than the parent node, thus grouping together similar scores.
 
 ## Bagging 
-Fundamentally, RF combines decision trees with a bootstrapping method. Simply put, each tree in your forest is built using bootstrapping to generate a new sample from your entire dataset.This new sample maintains the same probability distribution as the original dataset. For example, if you are analyzing a Netflix dataset with high variance in viewer preferences, your subsamples will mirror this distribution.
+Fundamentally, RF combines decision trees with a bootstrapping method. Simply put, each tree in a forest is built using bootstrapping to generate a new sample from the entire original dataset.This new sample maintains the same probability distribution as the original dataset. For example, if you are analyzing a Netflix dataset with high variance in viewer preferences, your subsamples will mirror this distribution.
 
-> A common misconception about RF is that each tree utilizes a smaller dataset than the original. In reality, bootstrapping employs a sampling-with-replacement technique, ensuring each new dataset also contains, says, 100,000 cases if the original did. It is possible for a single case to appear multiple times in a subsample since each resampling could select and replace it repeatedly.
+> A common misconception about RF is that each tree utilizes a smaller dataset than the original. In reality, bootstrapping employs a sampling-with-replacement technique, ensuring each new dataset has a similar sample size to the original dataset. It is possible for a single sample or case to appear multiple times in a subsdataset since each resampling could select and replace cases repeatedly.
 
 <img width="752" alt="Screen Shot 2024-05-01 at 7 48 35 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/916f6260-7e59-4f01-90d2-80c745b0c77c">
 
