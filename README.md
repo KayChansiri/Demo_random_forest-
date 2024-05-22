@@ -128,7 +128,6 @@ missing_percentage = (data.isna().sum() / len(data)) * 100
 # Print the percentage of missing values per column
 print(missing_percentage)
 ```
-<img width="384" alt="Screen Shot 2024-05-12 at 7 37 16 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/30cd4241-b7fd-417c-81b4-90e18b3dba12">
 
 <img width="421" alt="Screen Shot 2024-05-14 at 4 38 14 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/ee397fbe-7b91-4c20-a30c-de0f5d48c848">
 
