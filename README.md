@@ -28,7 +28,7 @@ It's important to recognize that errors in ML algorithms can stem from three sou
 <img width="695" alt="Screen Shot 2024-05-01 at 7 32 10 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/7439323c-a8cd-4496-b653-15ca800506ff">
 
 
-The goal of bagging is to reduce the variance term to make *h*<sub>*d*</sub>(X)(predicted values) as close as possible to *h*(X) (observed values). As shown in Figure 1, with an aim to reduce variance without increasing bias, bagging, or Bootstrap Aggregating, involves sampling m datasets with replacement from the initial data pool, *D*. This process generates datasets  *D*<sub>*1*</sub>,  *D*<sub>*2*</sub>,..., *D*<sub>*m*</sub>. For each, *D*<sub>*i*</sub>, train a classifier or a regressor *h*<sub>*i*</sub>(). The final classifer or regressor is calculated as: 
+The goal of bagging is to reduce the variance term to make *h*<sub>*D*</sub>(X)(predicted values) as close as possible to *h*(X) (observed values). As shown in the equation above, with an aim to reduce variance without increasing bias, bagging, or Bootstrap Aggregating, involves sampling m datasets with replacement from the initial data pool, *D*. This process generates datasets  *D*<sub>*1*</sub>,  *D*<sub>*2*</sub>,..., *D*<sub>*m*</sub>. For each, *D*<sub>*i*</sub>, train a classifier or a regressor *h*<sub>*i*</sub>(). The final classifer or regressor is calculated as: 
 
 <img width="231" alt="Screen Shot 2024-05-01 at 8 03 10 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/77885497-5500-4b90-a1d6-8fa2218973e4">
 
