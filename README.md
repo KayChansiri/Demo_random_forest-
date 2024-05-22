@@ -13,22 +13,21 @@ In classification tasks, each decision tree aims to classify samples into catego
 2. **Random Forest Regressor**
 In regression tasks, the objective is to predict a continuous value and minimize the variance within each node after the split. Here, impurity is represented by the variance in the node's values. A preferred split is one that results in child nodes with lower variance than the parent node, thus grouping together similar scores.
 
-## Bagging 
+## Bagging (Boostrapping Agrreggation) 
 Fundamentally, RF combines decision trees with a bootstrapping method. Simply put, each tree in a forest is built using bootstrapping to generate a new sample from the entire original dataset.This new sample maintains the same probability distribution as the original dataset. For example, if you are analyzing a Netflix dataset with high variance in viewer preferences, your subsamples will mirror this distribution.
 
 > A common misconception about RF is that each tree utilizes a smaller dataset than the original. In reality, bootstrapping employs a sampling-with-replacement technique, ensuring each new dataset has a similar sample size to the original dataset. It is possible for a single sample or case to appear multiple times in a subsdataset since each resampling could select and replace cases repeatedly.
 
 <img width="752" alt="Screen Shot 2024-05-01 at 7 48 35 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/916f6260-7e59-4f01-90d2-80c745b0c77c">
 
-
-Bootstrapping generates subsamples that replicate the original data distribution, allowing for numerous samples without the need for additional data collection. Each subsample is utilized to construct a tree. When these trees are combined, or ensembled, they produce a more accurate average prediction for regression tasks or the most frequently predicted class in classification tasks. This ensemble approach helps mitigate the high variance that single decision trees might exhibit. This whole process is referred to as **'bagging'** or **'boostraping aggregation.'**
+Each subsample in the boostrapping process is utilized to construct a tree. When these trees are combined, or ensembled, they produce a more accurate average prediction for regression tasks or the most frequently predicted class in classification tasks than a single tree. In other words, the ensemble process reduce errors better than a decision tree.
 
 It's important to recognize that errors in ML algorithms can stem from three sources: variance (indicative of overfitting), bias (indicative of underfitting), and noise (unpredicted variance of the target), as shown in the equation below
 
 <img width="695" alt="Screen Shot 2024-05-01 at 7 32 10 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/7439323c-a8cd-4496-b653-15ca800506ff">
 
 
-The goal of bagging is to reduce the variance term to make *h*<sub>*D*</sub>(X)(predicted values) as close as possible to *h*(X) (observed values). With an aim to reduce variance without increasing bias, bagging, or Bootstrap Aggregating, involves sampling m datasets with replacement from the initial data pool, *D*. This process generates datasets  *D*<sub>*1*</sub>,  *D*<sub>*2*</sub>,..., *D*<sub>*m*</sub>. For each, *D*<sub>*i*</sub>, train a classifier or a regressor *h*<sub>*i*</sub>(). The final classifer or regressor is calculated as: 
+The goal of bagging is to reduce the variance term to make *h*<sub>*D*</sub>(X)(predicted values) as close as possible to *h*(X) (observed values). With an aim to reduce variance without increasing bias, bagging involves sampling m datasets with replacement from the initial data pool, *D*. This process generates datasets  *D*<sub>*1*</sub>,  *D*<sub>*2*</sub>,..., *D*<sub>*m*</sub>. Each *D*<sub>*i*</sub> then is trained with a classifier or a regressor *h*<sub>*i*</sub>(). The final classifer or regressor across all trees is calculated as: 
 
 <img width="231" alt="Screen Shot 2024-05-01 at 8 03 10 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/77885497-5500-4b90-a1d6-8fa2218973e4">
 
