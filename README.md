@@ -57,9 +57,8 @@ The main advantage of OOB error estimation is that it provides a way to estimate
 
 
 The OOB error is very useful as it is automatically available as a by-product of the training process of the random forest, requiring no additional computational cost. This makes the OOB error a convenient and efficient tool for model evaluation and tuning, especially when dealing with large datasets where cross-validation can be computationally expensive. 
-> Note that beyond bagging, other methods such as collecting more data points or applying regularization techniques can help reduce bias as well. Another thing to note is that bagging is not exclusive to random forests; this ensemble technique can be applied to other algorithms as well if your goal is to reduce variance.
 
-## Features to be Fine-Tuned
+## Hyperparameters
 I previously mentioned the number of trees (`n_estimators`) and the maximum number of features (`max_features`) as parameters that can be fine-tuned. Below is the list of other parameters. For all parameters, the 'GridSearchCV' function, utilizing cross-validation, could help identify the best values along with other factors, such as computational complexity, time, and project objectives. For data with high dimensions, using GridSearch may not be time- and computing-efficient. Other strategies, such as random search or Bayesian optimization, are recommended.
 * **Maximum Depth of Trees (`max_depth`)**: There is no exact rule of thumb regarding how deep a tree should be, although limiting trees to not be too deep helps prevent overfitting. However, setting the parameter too low could lead to underfitting.
 * **Minimum Samples Split (`min_samples_split`)**: Typically, higher values prevent the model from learning overly specific patterns, which can lower the risk of overfitting. However, a value that is too high could lead to underfitting.
@@ -68,7 +67,6 @@ I previously mentioned the number of trees (`n_estimators`) and the maximum numb
 * **Bootstrap (`bootstrap`)**: By default, RF always utilizes bootstrap. However, if the function is set to be 'false', the whole dataset is used to build each tree. I do not recommend this as bootstrapping can generate heterogeneous samples that still share the same distribution with the original data pool to prevent the issue of overfitting commonly found in decision trees where the whole dataset is used.
 * **Criterion (`criterion`)**: The function to measure the quality of a split. For classification forests, 'Gini' for Gini impurity and 'entropy' for information gain are commonly used. For regression forests, Mean Squared Error ('MSE') or Mean Absolute Error ('MAE') are used to calculate the distance between the actual and predicted values at a node. The split that minimizes this error is chosen.
 * **Max Leaf Nodes (`max_leaf_nodes`)**: The maximum number of leaf nodes a tree can have. Note that if this parameter is defined, the trees might not reach the `max_depth` specified as the algorithm considers growing each tree according to its max_leaf_node first.
-* **Max Features for each split ('max_features')**: This is to set the number of features to be considered for each node splitting. For example, if you set max_features to 5, it means that at each node in each tree, the algorithm will randomly select 5 features from the full set of features available in your dataset. It will then only consider these 5 features to find the best split at that node. This process of random feature selection is repeated independently for each node in each tree in the forest. 
 * **Random State (`random_state`)**: Finally, DO NOT forget to set your random state (or set.seed() if you are an R user). This is important for model reproducibility!
 
 ## Now that you have learned about the basics of RF, let's apply the algorithm to a real-world use case
@@ -90,7 +88,7 @@ The dataset consists of responses and operational metrics collected from custome
 
 ### Data Preparation
 
-The first step is you need to ensure that each feature in the dataset is encoded in the way they are supposed to be (i.e., categorical features are encoded as categorical and continuous are encoded as continuous).
+The first step is to ensure that each feature in the dataset is encoded in the way they are supposed to be (i.e., categorical features are encoded as categorical and continuous are encoded as continuous).
 
 ```ruby
 data.dtypes
@@ -98,7 +96,7 @@ data.dtypes
 <img width="409" alt="Screen Shot 2024-05-12 at 7 23 35 PM" src="https://github.com/KayChansiri/demo_random_forest-/assets/157029107/32272b6e-a7f2-4a7c-8aca-43d7e9357115">
 
 
-You can see that certain categorical variables are are still coded as numeric. Let's convert them: 
+According to the output, certain categorical variables are are still coded as numeric. Let's convert them: 
 
 ```ruby
 #Convert int64 to be categorical 
