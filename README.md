@@ -213,6 +213,7 @@ for variable in categorical_variables:
 
 Here is the output: 
 
+```
 Counts for race_caucasian:
 0    8365
 1    7364
@@ -307,7 +308,7 @@ Counts for service_location_apartments:
 0    15400
 1      329
 Name: service_location_apartments, dtype: int64
-
+```
 
 Given the counts of each level of the categorical predictors, we have certain categories with very uneven distributions, such as service_location_apartments or race_other. For these features, setting min_samples_split too high might prevent each tree from splitting on these features, especially in deeper parts of the tree where the number of samples per node could naturally be lower. Thus, for categories with a smaller number of samples, we have to set a smaller min_samples_split to allow splits on these less frequent categories. 
 
